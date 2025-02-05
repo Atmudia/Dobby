@@ -56,7 +56,7 @@ jobs:
         run: |
           cmake -DCMAKE_SYSTEM_PROCESSOR=amd64 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -DDynamicBinaryInstrument=OFF -DPlugin.SymbolResolver=OFF -B build64
           cmake -DCMAKE_SYSTEM_PROCESSOR=x86 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_CXX_FLAGS="-m32" -DCMAKE_C_FLAGS="-m32" -DCMAKE_SHARED_LINKER_FLAGS="-m32" -DCMAKE_BUILD_TYPE=Release -DDynamicBinaryInstrument=OFF -DPlugin.SymbolResolver=OFF -B build86
-          
+
       - name: Build x64
         run: |
           cd build64 && make dobby
@@ -75,6 +75,37 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Linux
+          path: build_result
+
+  linux-arm64-build:
+    runs-on: ubuntu-latest
+    name: Linux ARM64 Build
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install ARM64 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Configure CMake for ARM64
+        run: |
+          cmake -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -DDynamicBinaryInstrument=OFF -DPlugin.SymbolResolver=OFF -B build_arm64
+
+      - name: Build ARM64
+        run: |
+          cd build_arm64 && make dobby
+          
+      - name: Collect artifacts
+        run: |
+          mkdir build_result
+          cp build_arm64/libdobby.a build_result/libdobby_arm64.a
+          
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Linux_ARM64
           path: build_result
 
   macos-build:
