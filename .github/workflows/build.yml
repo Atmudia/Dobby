@@ -78,7 +78,7 @@ jobs:
           path: build_result
 
   linux-bionic-arm64-build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     name: Linux Bionic ARM64 Build
 
     steps:
