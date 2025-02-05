@@ -76,36 +76,55 @@ jobs:
         with:
           name: Linux
           path: build_result
-
-  linux-bionic-arm64-build:
+  android-arm64-v8a-build:
     runs-on: ubuntu-latest
-    name: Linux Bionic ARM64 Build
+    name: Android ARM64-v8a Build
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install ARM64 dependencies for Bionic
+      - name: Set up Android NDK
+        run: |
+          wget https://dl.google.com/android/repository/android-ndk-r23b-linux-x86_64.zip
+          unzip android-ndk-r23b-linux-x86_64.zip -d $HOME/ndk
+          echo "export ANDROID_NDK=$HOME/ndk/android-ndk-r23b" >> $GITHUB_ENV
+
+      - name: Set up Android SDK
+        run: |
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+          unzip commandlinetools-linux-7583922_latest.zip -d $HOME/android-sdk
+          echo "export ANDROID_SDK=$HOME/android-sdk" >> $GITHUB_ENV
+
+      - name: Install Android NDK dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libc6-dev-arm64-cross
+          sudo apt-get install -y build-essential python3 python3-pip
+          pip3 install --upgrade setuptools
 
-      - name: Configure CMake for ARM64 Bionic
+      - name: Configure CMake for Android ARM64-v8a
         run: |
-          cmake -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=Release -DDynamicBinaryInstrument=OFF -DPlugin.SymbolResolver=OFF -B build_arm64
+          cmake -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+                -DANDROID_ABI=arm64-v8a \
+                -DANDROID_NATIVE_API_LEVEL=21 \
+                -DCMAKE_SYSTEM_NAME=Android \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DDynamicBinaryInstrument=OFF \
+                -DPlugin.SymbolResolver=OFF \
+                -B build_android_arm64_v8a
 
-      - name: Build ARM64 Bionic
+      - name: Build Android ARM64-v8a
         run: |
-          cd build_arm64 && make dobby
-          
+          cd build_android_arm64_v8a && make dobby
+
       - name: Collect artifacts
         run: |
           mkdir build_result
-          cp build_arm64/libdobby.a build_result/libdobby_arm64.a
-          
+          cp build_android_arm64_v8a/libdobby.a build_result/libdobby_arm64_v8a.a
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Linux_Bionic_ARM64
+          name: Android_ARM64-v8a
           path: build_result
 
   macos-build:
